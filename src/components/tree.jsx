@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 export const Tree = ({ items, className }) => {
+    console.log({items});
+
     const [expandedItems, setExpandedItems] = useState(() => {
         const initialState = {};
         const setExpanded = (items) => {
