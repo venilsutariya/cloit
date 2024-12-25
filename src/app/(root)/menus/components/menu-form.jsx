@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import {
     Form,
@@ -14,27 +13,63 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { createMenuItemFunc } from "@/redux/menuSlice";
 
 const menuSchema = z.object({
     menuID: z.string().nonempty("MenuID is required"),
     depth: z.number().min(1, "Depth must be at least 1"),
-    parentData: z.string().nonempty("parentData is required"),
+    parentData: z.string().nonempty("Parent Data is required"),
     name: z.string().nonempty("Name is required"),
 });
 
-export const MenuForm = () => {
+const defaultValues = {
+    menuID: "",
+    depth: 1,
+    parentData: "",
+    name: "",
+    parentId: "",
+};
+
+export const MenuForm = ({ formData, setMenuFormData }) => {
+    const dispatch = useDispatch();
     const form = useForm({
         resolver: zodResolver(menuSchema),
-        defaultValues: {
-            menuID: "",
-            depth: 1,
-            parentData: "",
-            name: "",
-        },
+        defaultValues
     });
 
-    const onSubmit = (data) => {
-        console.log("Form Submitted", data);
+    useEffect(() => {
+        if (formData) {
+            form.reset(formData);
+        }
+    }, [formData, form]);
+
+    const resetForm = () => {
+        form.reset(defaultValues);
+        setMenuFormData(defaultValues);
+    };
+
+    const onSubmit = async (data) => {
+        const newMenuItem = {
+            menuId: data.menuID,
+            label: data.name,
+            depth: data.depth,
+            parentId: formData.parentId,
+            parentData: data.parentData,
+        };
+
+        try {
+            const response = await dispatch(createMenuItemFunc(newMenuItem));
+            if (response?.error) {
+                console.error("Error creating menu item:", response.error);
+            } else {
+                dispatch(addMenuItemToTree(response.payload));
+            }
+        } catch (error) {
+            console.error("Unexpected error:", error);
+        }
+        resetForm();
     };
 
     return (
@@ -57,11 +92,16 @@ export const MenuForm = () => {
                 <FormField
                     name="depth"
                     control={form.control}
-                    render={({ field }) => (
+                    render={({ field: { onChange, ...field } }) => (
                         <FormItem>
                             <FormLabel>Depth</FormLabel>
-                            <FormControl className="lg:max-w-[260px] bg-[#EAECF0]">
-                                <Input type="number" placeholder="Enter Depth" {...field} />
+                            <FormControl>
+                                <Input
+                                    type="number"
+                                    placeholder="Enter Depth"
+                                    onChange={(e) => onChange(Number(e.target.value))}
+                                    {...field}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -74,7 +114,7 @@ export const MenuForm = () => {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Parent Data</FormLabel>
-                            <FormControl className="lg:max-w-[260px]">
+                            <FormControl>
                                 <Input placeholder="Enter Parent Data" {...field} />
                             </FormControl>
                             <FormMessage />
@@ -88,7 +128,7 @@ export const MenuForm = () => {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Name</FormLabel>
-                            <FormControl className="lg:max-w-[260px]">
+                            <FormControl>
                                 <Input placeholder="Enter Name" {...field} />
                             </FormControl>
                             <FormMessage />

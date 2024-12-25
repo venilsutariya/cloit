@@ -15,9 +15,16 @@ export const createMenuFunc = createAsyncThunk(
 
 export const createMenuItemFunc = createAsyncThunk(
   "menu/createMenuItem",
-  async (itemData, { rejectWithValue }) => {
+  async (itemData, { rejectWithValue, dispatch }) => {
     try {
-      const response = await axiosInstance.post("/menuItem", itemData);
+      const response = await axiosInstance.post("/menu/item", itemData);
+      
+      dispatch(getMenuByIdFunc(itemData.menuId));
+      
+      if (itemData.parentId) {
+        dispatch(updateMenuTree({ parentId: itemData.parentId, newItem: response.data }));
+      }
+      
       return response.data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -124,6 +131,24 @@ const menuSlice = createSlice({
     setSingleMenu: (state, action) => {
       state.menu = action.payload;
     },
+    updateMenuTree: (state, action) => {
+      const { parentId, newItem } = action.payload;
+      const updateTree = (items) => {
+        return items.map((item) => {
+          if (item.id === parentId) {
+            if (!item.children) {
+              item.children = [];
+            }
+            item.children.push(newItem);
+          } else if (item.children) {
+            item.children = updateTree(item.children);
+          }
+          return item;
+        });
+      };
+
+      state.menus = updateTree(state.menus);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -139,21 +164,18 @@ const menuSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
-      // New case for fetching a menu by ID
       .addCase(getMenuByIdFunc.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(getMenuByIdFunc.fulfilled, (state, action) => {
-        state.menu = action.payload; // Store the fetched menu data
+        state.menu = action.payload;
         state.loading = false;
       })
       .addCase(getMenuByIdFunc.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(createMenuItemFunc.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -166,7 +188,6 @@ const menuSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(getAllMenusFunc.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -179,7 +200,6 @@ const menuSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(updateMenuItemFunc.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -197,7 +217,6 @@ const menuSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(deleteMenuItemFunc.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -225,6 +244,7 @@ export const {
   updateMenuItem,
   deleteMenuItem,
   setSingleMenu,
+  updateMenuTree,
 } = menuSlice.actions;
 
 export default menuSlice.reducer;

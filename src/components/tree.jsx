@@ -5,9 +5,7 @@ import { ChevronRight, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-export const Tree = ({ items, className }) => {
-    console.log({items});
-
+export const Tree = ({ items, className, onPlusClick, menuId }) => {
     const [expandedItems, setExpandedItems] = useState(() => {
         const initialState = {};
         const setExpanded = (items) => {
@@ -42,9 +40,9 @@ export const Tree = ({ items, className }) => {
                 <Button className="text-sm sm:text-base whitespace-nowrap" onClick={() => toggleAll(true)}>
                     Expand All
                 </Button>
-                <Button 
-                    className="text-sm sm:text-base whitespace-nowrap" 
-                    variant="outline" 
+                <Button
+                    className="text-sm sm:text-base whitespace-nowrap"
+                    variant="outline"
                     onClick={() => toggleAll(false)}
                 >
                     Collapse All
@@ -59,6 +57,9 @@ export const Tree = ({ items, className }) => {
                         setExpandedItems={setExpandedItems}
                         isLast={index === items.length - 1}
                         level={0}
+                        parentData={[]}
+                        onPlusClick={onPlusClick}
+                        menuId={menuId}
                     />
                 ))}
             </div>
@@ -66,31 +67,49 @@ export const Tree = ({ items, className }) => {
     );
 };
 
-const TreeItem = ({ 
-    id, 
-    label, 
-    isPlus, 
-    children, 
-    expandedItems, 
-    setExpandedItems, 
+const TreeItem = ({
+    id,
+    label,
+    isPlus,
+    children,
+    expandedItems,
+    setExpandedItems,
     isLast,
-    level
+    level,
+    parentData,
+    onPlusClick,
+    menuId
 }) => {
     const isExpanded = expandedItems[id];
     const hasChildren = children && children.length > 0;
+    const [isHovered, setIsHovered] = useState(false);
 
     const toggleExpand = () => {
         setExpandedItems((prev) => ({ ...prev, [id]: !isExpanded }));
     };
 
+    const handlePlusClick = () => {
+        const data = {
+            menuId: menuId,
+            parentData: label,
+            parentId: id,
+            depth: level + 1,
+        };
+        onPlusClick(data);
+    };
+
     return (
         <div className="relative">
-            <div className="relative flex items-center group">
-                <div 
-                    className="absolute w-3 sm:w-4 h-px bg-gray-300" 
-                    style={{ left: '-12px' }} 
+            <div
+                className="relative flex items-center group"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            >
+                <div
+                    className="absolute w-3 sm:w-4 h-px bg-gray-300"
+                    style={{ left: '-12px' }}
                 />
-                
+
                 <div className="flex items-center py-2 min-w-0">
                     {hasChildren && (
                         <ChevronRight
@@ -102,17 +121,21 @@ const TreeItem = ({
                         />
                     )}
                     {!hasChildren && <div className="w-4 shrink-0" />}
-                    <span 
+                    <span
                         className="ml-1 cursor-pointer select-none truncate"
                         onClick={hasChildren ? toggleExpand : undefined}
                     >
                         {label}
                     </span>
-                    {isPlus && (
-                        <span className="ml-2 flex h-6 w-6 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-[blue] text-white">
-                            <Plus size={16} />
-                        </span>
-                    )}
+                    <span
+                        className={cn(
+                            isHovered ? "opacity-100" : "opacity-0",
+                            "ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[blue] hover:cursor-pointer text-white"
+                        )}
+                        onClick={handlePlusClick}
+                    >
+                        <Plus size={16} />
+                    </span>
                 </div>
             </div>
 
@@ -126,6 +149,8 @@ const TreeItem = ({
                             setExpandedItems={setExpandedItems}
                             isLast={index === children.length - 1}
                             level={level + 1}
+                            parentData={[...parentData, { id, label }]}
+                            onPlusClick={onPlusClick}
                         />
                     ))}
                 </div>
@@ -133,5 +158,3 @@ const TreeItem = ({
         </div>
     );
 };
-
-export default Tree;
