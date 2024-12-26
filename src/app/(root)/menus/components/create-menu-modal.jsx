@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { createMenuFunc, getAllMenusFunc } from "@/redux/menuSlice"; // Import getAllMenusFunc
+import { createMenuFunc, getAllMenusFunc } from "@/redux/menuSlice";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

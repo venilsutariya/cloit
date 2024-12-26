@@ -49,9 +49,10 @@ export const getAllMenusFunc = createAsyncThunk(
 
 export const updateMenuItemFunc = createAsyncThunk(
   "menu/updateMenuItem",
-  async ({ id, itemData }, { rejectWithValue }) => {
+  async ({ id, menuItemData, menuId }, { rejectWithValue, dispatch }) => {    
     try {
-      const response = await axiosInstance.put(`/menuItem/${id}`, itemData);
+      const response = await axiosInstance.put(`/menu/item/${id}`, menuItemData);
+      dispatch(getMenuByIdFunc(menuId));
       return response.data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -61,9 +62,10 @@ export const updateMenuItemFunc = createAsyncThunk(
 
 export const deleteMenuItemFunc = createAsyncThunk(
   "menu/deleteMenuItem",
-  async (id, { rejectWithValue }) => {
+  async ({ id, menuId }, { rejectWithValue, dispatch }) => {
     try {
-      await axiosInstance.delete(`/menuItem/${id}`);
+      await axiosInstance.delete(`/menu/item/${id}`);
+      dispatch(getMenuByIdFunc(menuId));
       return id;
     } catch (error) {
       return rejectWithValue(error.message);

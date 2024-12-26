@@ -15,14 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { createMenuItemFunc } from "@/redux/menuSlice";
-
-const menuSchema = z.object({
-    menuID: z.string().nonempty("MenuID is required"),
-    depth: z.number().min(1, "Depth must be at least 1"),
-    parentData: z.string().nonempty("Parent Data is required"),
-    name: z.string().nonempty("Name is required"),
-});
+import { createMenuItemFunc, updateMenuItemFunc } from "@/redux/menuSlice";
 
 const defaultValues = {
     menuID: "",
@@ -32,11 +25,24 @@ const defaultValues = {
     parentId: "",
 };
 
-export const MenuForm = ({ formData, setMenuFormData }) => {
+export const MenuForm = ({ formData, setMenuFormData, editMode }) => {
     const dispatch = useDispatch();
+
+    const menuSchema = z.object({
+        menuID: z.string().nonempty("MenuID is required"),
+        depth: z.preprocess(
+            (val) => (editMode ? 1 : Number(val)),
+            editMode ? z.number().optional() : z.number().min(1, "Depth must be at least 1")
+        ),
+        parentData: editMode
+            ? z.string().optional()
+            : z.string().nonempty("Parent Data is required"),
+        name: z.string().nonempty("Name is required"),
+    });
+
     const form = useForm({
         resolver: zodResolver(menuSchema),
-        defaultValues
+        defaultValues,
     });
 
     useEffect(() => {
@@ -51,24 +57,35 @@ export const MenuForm = ({ formData, setMenuFormData }) => {
     };
 
     const onSubmit = async (data) => {
-        const newMenuItem = {
+        const menuItemData = {
             menuId: data.menuID,
             label: data.name,
             depth: data.depth,
             parentId: formData.parentId,
             parentData: data.parentData,
+            ...(editMode && { id: formData.id }),
         };
 
         try {
-            const response = await dispatch(createMenuItemFunc(newMenuItem));
-            if (response?.error) {
-                console.error("Error creating menu item:", response.error);
+            if (editMode) {
+                const response = await dispatch(updateMenuItemFunc({ id: formData.id, menuItemData, menuId: data.menuID }));
+                if (response?.error) {
+                    console.error("Error updating menu item:", response.error);
+                } else {
+                    console.log("Menu item updated:", response.payload);
+                }
             } else {
-                dispatch(addMenuItemToTree(response.payload));
+                const response = await dispatch(createMenuItemFunc(menuItemData));
+                if (response?.error) {
+                    console.error("Error creating menu item:", response.error);
+                } else {
+                    console.log("Menu item created:", response.payload);
+                }
             }
         } catch (error) {
             console.error("Unexpected error:", error);
         }
+
         resetForm();
     };
 
@@ -82,7 +99,12 @@ export const MenuForm = ({ formData, setMenuFormData }) => {
                         <FormItem>
                             <FormLabel>MenuID</FormLabel>
                             <FormControl>
-                                <Input placeholder="Enter MenuID" {...field} />
+                                <Input
+                                    placeholder="Enter MenuID"
+                                    {...field}
+                                    readOnly
+                                    className="bg-gray-100 cursor-not-allowed"
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -101,6 +123,8 @@ export const MenuForm = ({ formData, setMenuFormData }) => {
                                     placeholder="Enter Depth"
                                     onChange={(e) => onChange(Number(e.target.value))}
                                     {...field}
+                                    disabled={editMode}
+                                    className={editMode ? "bg-gray-100 cursor-not-allowed" : ""}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -115,7 +139,12 @@ export const MenuForm = ({ formData, setMenuFormData }) => {
                         <FormItem>
                             <FormLabel>Parent Data</FormLabel>
                             <FormControl>
-                                <Input placeholder="Enter Parent Data" {...field} />
+                                <Input
+                                    placeholder="Enter Parent Data"
+                                    {...field}
+                                    disabled={editMode}
+                                    className={editMode ? "bg-gray-100 cursor-not-allowed" : ""}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -141,7 +170,7 @@ export const MenuForm = ({ formData, setMenuFormData }) => {
                     type="submit"
                     className="w-[50%] lg:w-[260px] h-[52px]"
                 >
-                    Save
+                    {editMode ? "Edit" : "Save"}
                 </Button>
             </form>
         </Form>

@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronRight, Plus } from 'lucide-react';
+import { ChevronRight, FilePenLine, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { DeleteItemDialog } from './delete-item-dialog';
+import { deleteMenuItemFunc } from '@/redux/menuSlice';
+import { useDispatch } from 'react-redux';
 
-export const Tree = ({ items, className, onPlusClick, menuId }) => {
+export const Tree = ({ items, className, onPlusClick, onEditClick, menuId }) => {
     const [expandedItems, setExpandedItems] = useState(() => {
         const initialState = {};
         const setExpanded = (items) => {
@@ -19,6 +22,7 @@ export const Tree = ({ items, className, onPlusClick, menuId }) => {
         setExpanded(items);
         return initialState;
     });
+    const dispatch = useDispatch();
 
     const toggleAll = (expand) => {
         const newExpandedState = {};
@@ -32,6 +36,10 @@ export const Tree = ({ items, className, onPlusClick, menuId }) => {
         };
         updateState(items);
         setExpandedItems(newExpandedState);
+    };
+
+    const handleDelete = async (id, menuId) => {
+        dispatch(deleteMenuItemFunc({ id, menuId }));
     };
 
     return (
@@ -59,7 +67,9 @@ export const Tree = ({ items, className, onPlusClick, menuId }) => {
                         level={0}
                         parentData={[]}
                         onPlusClick={onPlusClick}
+                        onEditClick={onEditClick}
                         menuId={menuId}
+                        onDelete={handleDelete}
                     />
                 ))}
             </div>
@@ -78,7 +88,9 @@ const TreeItem = ({
     level,
     parentData,
     onPlusClick,
-    menuId
+    menuId,
+    onDelete,
+    onEditClick
 }) => {
     const isExpanded = expandedItems[id];
     const hasChildren = children && children.length > 0;
@@ -96,6 +108,19 @@ const TreeItem = ({
             depth: level + 1,
         };
         onPlusClick(data);
+    };
+
+    const handleEditClick = () => {
+        const immediateParent = parentData[parentData.length - 1];
+        const data = {
+            menuId: menuId,
+            parentData: immediateParent?.label,
+            parentId: immediateParent?.id,
+            depth: level,
+            label,
+            id,
+        };
+        onEditClick(data);
     };
 
     return (
@@ -136,6 +161,22 @@ const TreeItem = ({
                     >
                         <Plus size={16} />
                     </span>
+                    <span
+                        className={cn(
+                            isHovered ? 'opacity-100' : 'opacity-0',
+                            'ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black hover:cursor-pointer text-white'
+                        )}
+                        onClick={handleEditClick}
+                    >
+                        <FilePenLine size={16} />
+                    </span>
+                    <DeleteItemDialog
+                        isHovered={isHovered}
+                        onDelete={onDelete}
+                        id={id}
+                        name={label}
+                        menuId={menuId}
+                    />
                 </div>
             </div>
 
@@ -151,6 +192,8 @@ const TreeItem = ({
                             level={level + 1}
                             parentData={[...parentData, { id, label }]}
                             onPlusClick={onPlusClick}
+                            onEditClick={onEditClick}
+                            onDelete={onDelete}
                         />
                     ))}
                 </div>

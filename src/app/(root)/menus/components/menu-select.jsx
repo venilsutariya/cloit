@@ -38,7 +38,7 @@ export const MenuSelect = ({ onMenuSelect }) => {
             <Select onValueChange={handleChange}>
                 <div className="flex gap-x-3">
                     <SelectTrigger id="menu-select" className="lg:w-[350px]">
-                        <SelectValue placeholder={"Select a menu"} />
+                        <SelectValue placeholder={menus.length > 0 && "Select a menu"} />
                     </SelectTrigger>
                     <Button
                         variant="save"

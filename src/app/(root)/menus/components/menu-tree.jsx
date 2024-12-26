@@ -4,7 +4,7 @@ import { getMenuByIdFunc } from "@/redux/menuSlice";
 import { Tree } from "@/components/tree";
 import { Loader2 } from "lucide-react";
 
-export const MenuTree = ({ selectedMenuId, onPlusClick }) => {
+export const MenuTree = ({ selectedMenuId, onPlusClick, onEditClick }) => {
     const dispatch = useDispatch();
     const { menu, loading, error } = useSelector((state) => state.menu);
     const [selectedMenu, setSelectedMenu] = useState(null);
@@ -40,6 +40,7 @@ export const MenuTree = ({ selectedMenuId, onPlusClick }) => {
                     items={selectedMenu.items}
                     menuId={selectedMenu.id}
                     onPlusClick={onPlusClick}
+                    onEditClick={onEditClick}
                 />
             ) : (
                 <p>Select a menu to view its tree</p>

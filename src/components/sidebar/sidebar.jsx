@@ -3,14 +3,15 @@
 import { cn } from "@/lib/utils";
 import { systemsRouteList, userAndCompetitionRouteList } from "@/lists/routes";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
-const RouteItem = ({ route, isActive }) => (
+const RouteItem = ({ route, isActive, router  }) => (
   <div
     className={cn(
       isActive ? "bg-[#9FF443] text-black": "hover:bg-gray-700",
       "p-[12px] flex items-center gap-x-[16px] cursor-pointer rounded-[16px]"
     )}
+    onClick={() => route.title === "Menus" && router.push(route.href)}
   >
     <Image src={route.icon} width={24} height={24} alt={route.title} />
     {route.title}
@@ -19,6 +20,7 @@ const RouteItem = ({ route, isActive }) => (
 
 export const Sidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
 
   const isRouteActive = (href) => pathname === href;
 
@@ -47,6 +49,7 @@ export const Sidebar = () => {
                 key={route.href}
                 route={route}
                 isActive={isRouteActive(route.href)}
+                router={router}
               />
             ))}
           </div>
